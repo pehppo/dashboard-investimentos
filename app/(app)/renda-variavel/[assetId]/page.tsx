@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getPriceHistory } from "@/lib/actions/quotes";
 import { formatBRL, formatDate } from "@/lib/format";
 import { Position, Transaction, RV_TYPE_LABELS, TX_TYPE_LABELS } from "@/lib/types";
 import { DeleteTransactionButton } from "@/components/investments/delete-transaction-button";
 import { EditTransactionDialog } from "@/components/investments/edit-transaction-dialog";
 import { ProventoDialog } from "@/components/investments/provento-dialog";
+import { PriceHistoryChart } from "@/components/investments/price-history-chart";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -48,6 +50,7 @@ export default async function AtivoRendaVariavelPage({
   const totalProventos = transactions
     .filter((tx) => tx.tx_type === "provento")
     .reduce((sum, tx) => sum + tx.amount, 0);
+  const priceHistory = pos.ticker ? await getPriceHistory(pos.ticker) : [];
 
   return (
     <div className="space-y-6">
@@ -93,6 +96,15 @@ export default async function AtivoRendaVariavelPage({
           </CardHeader>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico de preço</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PriceHistoryChart data={priceHistory} ticker={pos.ticker ?? ""} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
