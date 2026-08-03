@@ -15,7 +15,11 @@ import { RendaFixaTransactionForm } from "@/components/investments/renda-fixa-tr
 
 type Step = "choose" | "renda_variavel" | "renda_fixa";
 
-export function NewInvestmentButton() {
+export function NewInvestmentButton({
+  variant = "fab",
+}: {
+  variant?: "fab" | "icon";
+}) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("choose");
 
@@ -26,17 +30,33 @@ export function NewInvestmentButton() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Lançar investimento"
-        className="group fixed bottom-6 left-6 z-20 flex h-12 items-center gap-2 rounded-full bg-primary pl-3.5 pr-3.5 text-primary-foreground shadow-lg transition-all hover:pr-5 hover:shadow-xl"
-      >
-        <Plus className="size-5 shrink-0" />
-        <span className="grid max-w-0 grid-cols-[0fr] overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-300 group-hover:max-w-xs group-hover:grid-cols-[1fr]">
-          <span className="overflow-hidden">Lançar investimento</span>
-        </span>
-      </button>
+      {variant === "icon" ? (
+        // No mobile o conteúdo ocupa a tela toda (sem margem lateral como no
+        // desktop), então um botão fixo cobriria dados reais da tabela — por
+        // isso aqui vira um botão comum no cabeçalho em vez de flutuante.
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(true)}
+          aria-label="Lançar investimento"
+          className="sm:hidden"
+        >
+          <Plus className="size-4" />
+        </Button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Lançar investimento"
+          className="group fixed bottom-6 left-6 z-20 hidden h-12 items-center gap-2 rounded-full bg-primary pl-3.5 pr-3.5 text-primary-foreground shadow-lg transition-all hover:pr-5 hover:shadow-xl sm:flex"
+        >
+          <Plus className="size-5 shrink-0" />
+          <span className="grid max-w-0 grid-cols-[0fr] overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-300 group-hover:max-w-xs group-hover:grid-cols-[1fr]">
+            <span className="overflow-hidden">Lançar investimento</span>
+          </span>
+        </button>
+      )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent>
