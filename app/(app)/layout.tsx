@@ -1,9 +1,9 @@
 import { Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { MainNav } from "@/components/main-nav";
-import { SignOutButton } from "@/components/sign-out-button";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { NewInvestmentButton } from "@/components/new-investment-button";
+import { MainNav } from "@/components/layout/main-nav";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { NewInvestmentButton } from "@/components/investments/new-investment-button";
 
 export default async function AppLayout({
   children,

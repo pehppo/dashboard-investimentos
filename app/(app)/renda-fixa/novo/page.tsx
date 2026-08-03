@@ -1,4 +1,4 @@
-import { RendaFixaTransactionForm } from "@/components/renda-fixa-transaction-form";
+import { RendaFixaTransactionForm } from "@/components/investments/renda-fixa-transaction-form";
 import {
   Card,
   CardContent,

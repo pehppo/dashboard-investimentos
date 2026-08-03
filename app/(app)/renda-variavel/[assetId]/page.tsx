@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatBRL, formatDate } from "@/lib/format";
 import { Position, Transaction, RV_TYPE_LABELS, TX_TYPE_LABELS } from "@/lib/types";
-import { DeleteTransactionButton } from "@/components/delete-transaction-button";
+import { DeleteTransactionButton } from "@/components/investments/delete-transaction-button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,

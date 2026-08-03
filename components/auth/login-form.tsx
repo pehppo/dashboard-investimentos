@@ -6,7 +6,7 @@ import { signIn } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GoogleSignInButton } from "@/components/google-signin-button";
+import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 import {
   Card,
   CardContent,

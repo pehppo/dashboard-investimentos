@@ -1,4 +1,4 @@
-import { RendaVariavelTransactionForm } from "@/components/renda-variavel-transaction-form";
+import { RendaVariavelTransactionForm } from "@/components/investments/renda-variavel-transaction-form";
 import {
   Card,
   CardContent,

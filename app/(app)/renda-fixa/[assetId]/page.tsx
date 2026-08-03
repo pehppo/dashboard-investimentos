@@ -4,8 +4,8 @@ import { getRendaFixaRates } from "@/lib/external/bcb-sgs";
 import { estimateRendaFixaValue } from "@/lib/calc/rendafixa";
 import { formatBRL, formatDate } from "@/lib/format";
 import { Position, Transaction, formatIndexador, TX_TYPE_LABELS } from "@/lib/types";
-import { DeleteTransactionButton } from "@/components/delete-transaction-button";
-import { DeleteAssetButton } from "@/components/delete-asset-button";
+import { DeleteTransactionButton } from "@/components/investments/delete-transaction-button";
+import { DeleteAssetButton } from "@/components/investments/delete-asset-button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,

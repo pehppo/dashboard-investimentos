@@ -10,8 +10,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { RendaVariavelTransactionForm } from "@/components/renda-variavel-transaction-form";
-import { RendaFixaTransactionForm } from "@/components/renda-fixa-transaction-form";
+import { RendaVariavelTransactionForm } from "@/components/investments/renda-variavel-transaction-form";
+import { RendaFixaTransactionForm } from "@/components/investments/renda-fixa-transaction-form";
 
 type Step = "choose" | "renda_variavel" | "renda_fixa";
 

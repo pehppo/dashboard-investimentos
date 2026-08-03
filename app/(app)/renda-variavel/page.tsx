@@ -21,7 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DeleteTransactionButton } from "@/components/delete-transaction-button";
+import { DeleteTransactionButton } from "@/components/investments/delete-transaction-button";
 
 interface RvTransactionRow {
   id: string;

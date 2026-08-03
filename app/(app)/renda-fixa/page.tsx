@@ -6,7 +6,7 @@ import { estimateRendaFixaValue } from "@/lib/calc/rendafixa";
 import { formatBRL, formatDate, formatPercent } from "@/lib/format";
 import { Position, formatIndexador } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { DeleteAssetButton } from "@/components/delete-asset-button";
+import { DeleteAssetButton } from "@/components/investments/delete-asset-button";
 import {
   Table,
   TableBody,
