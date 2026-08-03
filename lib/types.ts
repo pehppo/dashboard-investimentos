@@ -1,7 +1,6 @@
-export type AssetClass = "renda_variavel" | "renda_fixa" | "fundo";
+export type AssetClass = "renda_variavel" | "renda_fixa";
 export type RvType = "acao" | "fii" | "etf" | "bdr";
 export type IndexadorType = "cdi_pct" | "ipca_mais" | "prefixado" | "selic_pct";
-export type FundoType = "fundo_investimento" | "pgbl" | "vgbl";
 export type TxType = "compra" | "venda" | "aporte" | "resgate";
 
 export interface Asset {
@@ -17,8 +16,6 @@ export interface Asset {
   purchase_date: string | null;
   maturity_date: string | null;
   principal_amount: number | null;
-  fundo_name: string | null;
-  fundo_type: FundoType | null;
   nickname: string | null;
   created_at: string;
 }
@@ -49,8 +46,6 @@ export interface Position {
   indexador_rate: number | null;
   purchase_date: string | null;
   maturity_date: string | null;
-  fundo_name: string | null;
-  fundo_type: FundoType | null;
   nickname: string | null;
   quantity_held: number;
   net_invested: number;

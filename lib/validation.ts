@@ -20,6 +20,16 @@ export type RendaVariavelTransactionInput = z.infer<
   typeof rendaVariavelTransactionSchema
 >;
 
+// Edição de transação: ticker/tipo do ativo não mudam (pertencem ao ativo, não à transação)
+export const editRendaVariavelTransactionSchema = rendaVariavelTransactionSchema.omit({
+  ticker: true,
+  rv_type: true,
+});
+
+export type EditRendaVariavelTransactionInput = z.infer<
+  typeof editRendaVariavelTransactionSchema
+>;
+
 export const rendaFixaAssetSchema = z.object({
   issuer: z.string().trim().min(1, "Informe o emissor"),
   rf_product: z.enum(["CDB", "Tesouro Direto", "LCI", "LCA"]),

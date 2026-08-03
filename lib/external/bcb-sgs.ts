@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import { createDeferredClient } from "@/lib/supabase/deferred";
 import { annualizeDailyRate, type RendaFixaRates } from "@/lib/calc/rendafixa";
+
+type SupabaseLike = Awaited<ReturnType<typeof createClient>>;
 
 export const BCB_SERIES = {
   CDI_DIARIO: 12,
@@ -27,28 +30,45 @@ async function fetchLatestFromBcb(seriesCode: number) {
   return { refDate: parseBrDate(data[0].data), value: Number(data[0].valor) };
 }
 
-export async function getLatestIndexValue(
-  seriesCode: number,
-): Promise<number | null> {
-  const supabase = await createClient();
-  const { data: cached } = await supabase
+async function getCachedIndexRow(supabase: SupabaseLike, seriesCode: number) {
+  const { data } = await supabase
     .from("index_series")
     .select("value, fetched_at")
     .eq("series_code", seriesCode)
     .order("ref_date", { ascending: false })
     .limit(1)
     .maybeSingle();
+  return data;
+}
+
+// Leitura rápida, só no cache — nunca chama a API do BCB. Usada no caminho
+// que bloqueia a renderização da página, pra navegação não esperar rede externa.
+export async function getCachedIndexValue(seriesCode: number): Promise<number | null> {
+  const supabase = await createClient();
+  const cached = await getCachedIndexRow(supabase, seriesCode);
+  return cached?.value ?? null;
+}
+
+// Busca na API do BCB só se o cache estiver velho, e grava. Chamada em segundo
+// plano (via `after()`) depois da resposta já ter sido enviada — não bloqueia nada.
+// `accessToken`: obrigatório quando chamado de dentro de `after()` (lá não dá
+// pra ler cookies, então usamos um cliente à parte autenticado via bearer token).
+export async function refreshIndexValueIfStale(
+  seriesCode: number,
+  accessToken?: string,
+): Promise<void> {
+  const supabase = accessToken ? createDeferredClient(accessToken) : await createClient();
+  const cached = await getCachedIndexRow(supabase, seriesCode);
 
   const isStale =
     !cached ||
-    Date.now() - new Date(cached.fetched_at).getTime() >
-      STALE_HOURS * 60 * 60 * 1000;
+    Date.now() - new Date(cached.fetched_at).getTime() > STALE_HOURS * 60 * 60 * 1000;
 
-  if (!isStale) return cached.value;
+  if (!isStale) return;
 
   try {
     const fresh = await fetchLatestFromBcb(seriesCode);
-    if (!fresh) return cached?.value ?? null;
+    if (!fresh) return;
 
     const { error } = await supabase
       .from("index_series")
@@ -57,22 +77,19 @@ export async function getLatestIndexValue(
         { onConflict: "series_code,ref_date" },
       );
     if (error) {
-      console.error("getLatestIndexValue: falha ao gravar cache", error);
+      console.error("refreshIndexValueIfStale: falha ao gravar cache", error);
     }
-
-    return fresh.value;
   } catch (err) {
-    // API do BCB fora do ar: degrada graciosamente para o último valor em cache.
-    console.error("getLatestIndexValue: falha ao buscar série BCB", err);
-    return cached?.value ?? null;
+    // API do BCB fora do ar: degrada graciosamente, mantém o último valor em cache.
+    console.error("refreshIndexValueIfStale: falha ao buscar série BCB", err);
   }
 }
 
 export async function getRendaFixaRates(): Promise<RendaFixaRates> {
   const [cdiDaily, selicAnnual, ipca12m] = await Promise.all([
-    getLatestIndexValue(BCB_SERIES.CDI_DIARIO),
-    getLatestIndexValue(BCB_SERIES.META_SELIC),
-    getLatestIndexValue(BCB_SERIES.IPCA_12M),
+    getCachedIndexValue(BCB_SERIES.CDI_DIARIO),
+    getCachedIndexValue(BCB_SERIES.META_SELIC),
+    getCachedIndexValue(BCB_SERIES.IPCA_12M),
   ]);
 
   return {
@@ -80,4 +97,12 @@ export async function getRendaFixaRates(): Promise<RendaFixaRates> {
     selicAnnualPct: selicAnnual,
     ipca12mPct: ipca12m,
   };
+}
+
+export async function refreshRendaFixaRatesIfStale(accessToken?: string): Promise<void> {
+  await Promise.all([
+    refreshIndexValueIfStale(BCB_SERIES.CDI_DIARIO, accessToken),
+    refreshIndexValueIfStale(BCB_SERIES.META_SELIC, accessToken),
+    refreshIndexValueIfStale(BCB_SERIES.IPCA_12M, accessToken),
+  ]);
 }

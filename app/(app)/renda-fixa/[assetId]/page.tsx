@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getRendaFixaRates } from "@/lib/external/bcb-sgs";
+import { getRendaFixaRates, refreshRendaFixaRatesIfStale } from "@/lib/external/bcb-sgs";
 import { estimateRendaFixaValue } from "@/lib/calc/rendafixa";
 import { formatBRL, formatDate } from "@/lib/format";
 import { Position, Transaction, formatIndexador, TX_TYPE_LABELS } from "@/lib/types";
 import { DeleteTransactionButton } from "@/components/investments/delete-transaction-button";
 import { DeleteAssetButton } from "@/components/investments/delete-asset-button";
+import { EditRendaFixaDialog } from "@/components/investments/edit-renda-fixa-dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -46,7 +48,11 @@ export default async function AtivoRendaFixaPage({
 
   const pos = position as Position;
   const transactions = (txs ?? []) as Transaction[];
-  const rates = await getRendaFixaRates();
+  const [rates, { data: { session } }] = await Promise.all([
+    getRendaFixaRates(),
+    supabase.auth.getSession(),
+  ]);
+  after(() => refreshRendaFixaRatesIfStale(session?.access_token));
 
   const estimated =
     pos.indexador && pos.indexador_rate != null && pos.purchase_date
@@ -69,7 +75,21 @@ export default async function AtivoRendaFixaPage({
           <h1 className="text-2xl font-semibold">{pos.issuer}</h1>
           <Badge variant="secondary">{pos.rf_product}</Badge>
         </div>
-        <DeleteAssetButton assetId={pos.asset_id} redirectTo="/renda-fixa" />
+        <div className="flex items-center gap-1">
+          {pos.indexador && pos.indexador_rate != null && pos.purchase_date && (
+            <EditRendaFixaDialog
+              assetId={pos.asset_id}
+              issuer={pos.issuer ?? ""}
+              rfProduct={pos.rf_product ?? "CDB"}
+              indexador={pos.indexador}
+              indexadorRate={pos.indexador_rate}
+              principalAmount={pos.net_invested}
+              purchaseDate={pos.purchase_date}
+              maturityDate={pos.maturity_date}
+            />
+          )}
+          <DeleteAssetButton assetId={pos.asset_id} redirectTo="/renda-fixa" />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

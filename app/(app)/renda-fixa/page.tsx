@@ -1,12 +1,14 @@
 import Link from "next/link";
+import { after } from "next/server";
 import { Landmark, Wallet, TrendingUp, TrendingDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { getRendaFixaRates } from "@/lib/external/bcb-sgs";
+import { getRendaFixaRates, refreshRendaFixaRatesIfStale } from "@/lib/external/bcb-sgs";
 import { estimateRendaFixaValue } from "@/lib/calc/rendafixa";
 import { formatBRL, formatDate, formatPercent } from "@/lib/format";
 import { Position, formatIndexador } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { DeleteAssetButton } from "@/components/investments/delete-asset-button";
+import { EditRendaFixaDialog } from "@/components/investments/edit-renda-fixa-dialog";
 import {
   Table,
   TableBody,
@@ -32,7 +34,11 @@ export default async function RendaFixaPage() {
     .order("purchase_date", { ascending: false });
 
   const positions = (data ?? []) as Position[];
-  const rates = await getRendaFixaRates();
+  const [rates, { data: { session } }] = await Promise.all([
+    getRendaFixaRates(),
+    supabase.auth.getSession(),
+  ]);
+  after(() => refreshRendaFixaRatesIfStale(session?.access_token));
 
   const rows = positions.map((p) => {
     const estimated =
@@ -178,7 +184,19 @@ export default async function RendaFixaPage() {
                       <TableCell className="text-right tabular-nums font-medium">
                         {p.estimated != null ? formatBRL(p.estimated) : "—"}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right whitespace-nowrap">
+                        {p.indexador && p.indexador_rate != null && p.purchase_date && (
+                          <EditRendaFixaDialog
+                            assetId={p.asset_id}
+                            issuer={p.issuer ?? ""}
+                            rfProduct={p.rf_product ?? "CDB"}
+                            indexador={p.indexador}
+                            indexadorRate={p.indexador_rate}
+                            principalAmount={p.net_invested}
+                            purchaseDate={p.purchase_date}
+                            maturityDate={p.maturity_date}
+                          />
+                        )}
                         <DeleteAssetButton assetId={p.asset_id} />
                       </TableCell>
                     </TableRow>

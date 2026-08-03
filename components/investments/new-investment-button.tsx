@@ -30,7 +30,7 @@ export function NewInvestmentButton() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Lançar investimento"
-        className="group fixed bottom-6 right-6 z-20 flex h-12 items-center gap-2 rounded-full bg-primary pl-3.5 pr-3.5 text-primary-foreground shadow-lg transition-all hover:pr-5 hover:shadow-xl"
+        className="group fixed bottom-6 left-6 z-20 flex h-12 items-center gap-2 rounded-full bg-primary pl-3.5 pr-3.5 text-primary-foreground shadow-lg transition-all hover:pr-5 hover:shadow-xl"
       >
         <Plus className="size-5 shrink-0" />
         <span className="grid max-w-0 grid-cols-[0fr] overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-300 group-hover:max-w-xs group-hover:grid-cols-[1fr]">

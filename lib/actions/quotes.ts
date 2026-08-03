@@ -1,13 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
+import { createDeferredClient } from "@/lib/supabase/deferred";
 import { fetchQuotes } from "@/lib/external/brapi";
 
 const STALE_MINUTES = 15;
 
 // Chamada a partir de Server Components — não é uma server action de formulário,
 // por isso não leva "use server" (evitamos expor um endpoint mutável desnecessário).
-export async function refreshQuotesIfStale(tickers: string[]) {
+// `accessToken`: passe quando chamado de dentro de `after()` (lá não dá pra ler
+// cookies, então usamos um cliente à parte autenticado via bearer token).
+export async function refreshQuotesIfStale(tickers: string[], accessToken?: string) {
   if (tickers.length === 0) return;
-  const supabase = await createClient();
+  const supabase = accessToken ? createDeferredClient(accessToken) : await createClient();
 
   const { data: latest } = await supabase
     .from("price_quotes")

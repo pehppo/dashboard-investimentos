@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { after } from "next/server";
 import { LineChart, Wallet, TrendingUp, TrendingDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { refreshQuotesIfStale, getLatestQuotes } from "@/lib/actions/quotes";
 import { formatBRL, formatPercent, formatDate } from "@/lib/format";
-import { Position, RvType, TxType, TX_TYPE_LABELS } from "@/lib/types";
+import { Position, RvType, TxType, TX_TYPE_LABELS, RV_TYPE_LABELS } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,6 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DeleteTransactionButton } from "@/components/investments/delete-transaction-button";
+import { EditTransactionDialog } from "@/components/investments/edit-transaction-dialog";
 
 interface RvTransactionRow {
   id: string;
@@ -29,6 +31,9 @@ interface RvTransactionRow {
   tx_type: TxType;
   quantity: number | null;
   unit_price: number | null;
+  amount: number;
+  fees: number;
+  notes: string | null;
   asset_id: string;
   assets: { ticker: string; rv_type: RvType } | null;
 }
@@ -45,7 +50,7 @@ export default async function RendaVariavelPage() {
     supabase
       .from("transactions")
       .select(
-        "id, tx_date, tx_type, quantity, unit_price, asset_id, assets!inner(ticker, rv_type)",
+        "id, tx_date, tx_type, quantity, unit_price, amount, fees, notes, asset_id, assets!inner(ticker, rv_type)",
       )
       .eq("assets.asset_class", "renda_variavel")
       .order("tx_date", { ascending: false }),
@@ -61,8 +66,11 @@ export default async function RendaVariavelPage() {
       transactions.map((t) => t.assets?.ticker).filter((t): t is string => !!t),
     ),
   );
-  await refreshQuotesIfStale(tickers);
-  const currentPrices = await getLatestQuotes(tickers);
+  const [currentPrices, { data: { session } }] = await Promise.all([
+    getLatestQuotes(tickers),
+    supabase.auth.getSession(),
+  ]);
+  after(() => refreshQuotesIfStale(tickers, session?.access_token));
 
   const totalInvestido = openPositions.reduce((sum, p) => sum + p.net_invested, 0);
   // quando a cotação não está disponível, mantém o valor investido (sem impacto no resultado)
@@ -136,6 +144,64 @@ export default async function RendaVariavelPage() {
         </div>
       )}
 
+      {openPositions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Posições</CardTitle>
+            <CardDescription>
+              Quanto você tem de cada ativo hoje, pela cotação atual
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ticker</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Quantidade</TableHead>
+                    <TableHead className="text-right">Preço atual</TableHead>
+                    <TableHead className="text-right">Valor atual</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {openPositions.map((p) => {
+                    const price = p.ticker ? currentPrices[p.ticker] : undefined;
+                    const value = price != null ? price * p.quantity_held : null;
+                    return (
+                      <TableRow key={p.asset_id}>
+                        <TableCell className="font-medium">
+                          <Link
+                            href={`/renda-variavel/${p.asset_id}`}
+                            className="underline underline-offset-4"
+                          >
+                            {p.ticker}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {p.rv_type ? RV_TYPE_LABELS[p.rv_type] : "-"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {p.quantity_held}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {price != null ? formatBRL(price) : "—"}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">
+                          {value != null ? formatBRL(value) : "—"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Transações</CardTitle>
@@ -163,6 +229,7 @@ export default async function RendaVariavelPage() {
                     <TableHead>Data</TableHead>
                     <TableHead className="text-right">Quantidade</TableHead>
                     <TableHead className="text-right">Preço</TableHead>
+                    <TableHead className="text-right">Valor total</TableHead>
                     <TableHead className="text-right">Preço atual</TableHead>
                     <TableHead />
                   </TableRow>
@@ -198,9 +265,22 @@ export default async function RendaVariavelPage() {
                           {tx.unit_price != null ? formatBRL(tx.unit_price) : "-"}
                         </TableCell>
                         <TableCell className="text-right tabular-nums font-medium">
+                          {formatBRL(tx.amount)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
                           {currentPrice != null ? formatBRL(currentPrice) : "—"}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right whitespace-nowrap">
+                          <EditTransactionDialog
+                            transactionId={tx.id}
+                            ticker={ticker ?? ""}
+                            txType={tx.tx_type === "venda" ? "venda" : "compra"}
+                            txDate={tx.tx_date}
+                            quantity={tx.quantity}
+                            unitPrice={tx.unit_price}
+                            fees={tx.fees}
+                            notes={tx.notes}
+                          />
                           <DeleteTransactionButton transactionId={tx.id} />
                         </TableCell>
                       </TableRow>

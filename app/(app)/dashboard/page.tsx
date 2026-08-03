@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { after } from "next/server";
 import {
   Landmark,
   LineChart,
@@ -9,7 +10,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { refreshQuotesIfStale, getLatestQuotes } from "@/lib/actions/quotes";
-import { getRendaFixaRates } from "@/lib/external/bcb-sgs";
+import { getRendaFixaRates, refreshRendaFixaRatesIfStale } from "@/lib/external/bcb-sgs";
 import { estimateRendaFixaValue } from "@/lib/calc/rendafixa";
 import { formatBRL, formatPercent } from "@/lib/format";
 import { Position } from "@/lib/types";
@@ -25,14 +26,12 @@ import {
 const CLASS_LABELS: Record<string, string> = {
   renda_variavel: "Renda Variável",
   renda_fixa: "Renda Fixa",
-  fundo: "Fundos / Previdência",
 };
 
 // Ordem fixa por classe (nunca ciclada) — mantém a mesma cor para a mesma classe em toda a tela.
 const CLASS_COLORS: Record<string, string> = {
   renda_variavel: "var(--chart-1)",
   renda_fixa: "var(--chart-2)",
-  fundo: "var(--chart-3)",
 };
 
 const CLASS_HREFS: Record<string, string> = {
@@ -101,12 +100,10 @@ function ClassSummaryCard({
 function ClassEmptyCard({
   title,
   color,
-  href,
   icon,
 }: {
   title: string;
   color: string;
-  href: string;
   icon: React.ReactNode;
 }) {
   return (
@@ -126,13 +123,7 @@ function ClassEmptyCard({
             {icon}
           </div>
           <p className="text-sm text-muted-foreground">
-            Nenhum investimento ainda.{" "}
-            <Link
-              href={href}
-              className="font-medium text-primary underline underline-offset-4"
-            >
-              Lançar
-            </Link>
+            Nenhum investimento ainda.
           </p>
         </div>
       </CardContent>
@@ -159,11 +150,16 @@ export default async function DashboardPage() {
   const rvTickers = Array.from(
     new Set(rvPositions.map((p) => p.ticker).filter((t): t is string => !!t)),
   );
-  await refreshQuotesIfStale(rvTickers);
-  const [currentPrices, rates] = await Promise.all([
+  // Lê o que já está em cache pra render ser instantâneo; a atualização das
+  // cotações/taxas roda em segundo plano depois da resposta ser enviada.
+  const [currentPrices, rates, { data: { session } }] = await Promise.all([
     getLatestQuotes(rvTickers),
     getRendaFixaRates(),
+    supabase.auth.getSession(),
   ]);
+  const accessToken = session?.access_token;
+  after(() => refreshQuotesIfStale(rvTickers, accessToken));
+  after(() => refreshRendaFixaRatesIfStale(accessToken));
 
   const totalInvestidoRV = rvPositions.reduce((sum, p) => sum + p.net_invested, 0);
   const totalAtualRV = rvPositions.reduce((sum, p) => {
@@ -266,13 +262,6 @@ export default async function DashboardPage() {
               </div>
               <p className="text-sm text-muted-foreground">
                 Você ainda não lançou nenhum investimento.
-                <br />
-                <Link
-                  href="/renda-variavel/novo"
-                  className="font-medium text-primary underline underline-offset-4"
-                >
-                  Lance sua primeira transação
-                </Link>
               </p>
             </div>
           ) : (
@@ -345,7 +334,6 @@ export default async function DashboardPage() {
           <ClassEmptyCard
             title="Renda Variável"
             color={CLASS_COLORS.renda_variavel}
-            href="/renda-variavel/novo"
             icon={<LineChart className="size-5 text-muted-foreground" />}
           />
         )}
@@ -369,7 +357,6 @@ export default async function DashboardPage() {
           <ClassEmptyCard
             title="Renda Fixa"
             color={CLASS_COLORS.renda_fixa}
-            href="/renda-fixa/novo"
             icon={<Landmark className="size-5 text-muted-foreground" />}
           />
         )}

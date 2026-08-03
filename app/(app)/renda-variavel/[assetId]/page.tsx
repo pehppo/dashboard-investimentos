@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatBRL, formatDate } from "@/lib/format";
 import { Position, Transaction, RV_TYPE_LABELS, TX_TYPE_LABELS } from "@/lib/types";
 import { DeleteTransactionButton } from "@/components/investments/delete-transaction-button";
+import { EditTransactionDialog } from "@/components/investments/edit-transaction-dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -123,7 +124,17 @@ export default async function AtivoRendaVariavelPage({
                     <TableCell className="text-right tabular-nums font-medium">
                       {formatBRL(tx.amount)}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right whitespace-nowrap">
+                      <EditTransactionDialog
+                        transactionId={tx.id}
+                        ticker={pos.ticker ?? ""}
+                        txType={tx.tx_type === "venda" ? "venda" : "compra"}
+                        txDate={tx.tx_date}
+                        quantity={tx.quantity}
+                        unitPrice={tx.unit_price}
+                        fees={tx.fees}
+                        notes={tx.notes}
+                      />
                       <DeleteTransactionButton transactionId={tx.id} />
                     </TableCell>
                   </TableRow>

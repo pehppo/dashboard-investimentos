@@ -1,8 +1,7 @@
 # Dashboard de Investimentos
 
 Aplicação pessoal para controlar e lançar investimentos: renda variável
-(ações, FIIs, ETFs, BDRs), renda fixa (CDB, Tesouro Direto, LCI, LCA) e, no
-futuro, fundos/previdência.
+(ações, FIIs, ETFs, BDRs) e renda fixa (CDB, Tesouro Direto, LCI, LCA).
 
 ## Stack
 
