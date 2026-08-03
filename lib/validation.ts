@@ -30,6 +30,14 @@ export type EditRendaVariavelTransactionInput = z.infer<
   typeof editRendaVariavelTransactionSchema
 >;
 
+export const proventoSchema = z.object({
+  amount: z.coerce.number().positive("Valor deve ser maior que zero"),
+  tx_date: z.string().min(1, "Informe a data"),
+  notes: z.string().trim().max(500).optional().or(z.literal("")),
+});
+
+export type ProventoInput = z.infer<typeof proventoSchema>;
+
 export const rendaFixaAssetSchema = z.object({
   issuer: z.string().trim().min(1, "Informe o emissor"),
   rf_product: z.enum(["CDB", "Tesouro Direto", "LCI", "LCA"]),

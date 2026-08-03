@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { Trash2 } from "lucide-react";
 import { deleteTransaction } from "@/lib/actions/transactions";
 import { Button } from "@/components/ui/button";
 
@@ -25,6 +26,7 @@ export function DeleteTransactionButton({
         }
       }}
     >
+      <Trash2 className="size-3.5" />
       Excluir
     </Button>
   );

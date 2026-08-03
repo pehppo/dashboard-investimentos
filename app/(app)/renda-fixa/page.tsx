@@ -185,19 +185,21 @@ export default async function RendaFixaPage() {
                         {p.estimated != null ? formatBRL(p.estimated) : "—"}
                       </TableCell>
                       <TableCell className="text-right whitespace-nowrap">
-                        {p.indexador && p.indexador_rate != null && p.purchase_date && (
-                          <EditRendaFixaDialog
-                            assetId={p.asset_id}
-                            issuer={p.issuer ?? ""}
-                            rfProduct={p.rf_product ?? "CDB"}
-                            indexador={p.indexador}
-                            indexadorRate={p.indexador_rate}
-                            principalAmount={p.net_invested}
-                            purchaseDate={p.purchase_date}
-                            maturityDate={p.maturity_date}
-                          />
-                        )}
-                        <DeleteAssetButton assetId={p.asset_id} />
+                        <div className="flex items-center justify-end gap-1">
+                          {p.indexador && p.indexador_rate != null && p.purchase_date && (
+                            <EditRendaFixaDialog
+                              assetId={p.asset_id}
+                              issuer={p.issuer ?? ""}
+                              rfProduct={p.rf_product ?? "CDB"}
+                              indexador={p.indexador}
+                              indexadorRate={p.indexador_rate}
+                              principalAmount={p.net_invested}
+                              purchaseDate={p.purchase_date}
+                              maturityDate={p.maturity_date}
+                            />
+                          )}
+                          <DeleteAssetButton assetId={p.asset_id} />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

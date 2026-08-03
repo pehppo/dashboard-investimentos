@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { deleteAsset } from "@/lib/actions/assets";
 import { Button } from "@/components/ui/button";
 
@@ -30,6 +31,7 @@ export function DeleteAssetButton({
         }
       }}
     >
+      <Trash2 className="size-3.5" />
       Excluir
     </Button>
   );

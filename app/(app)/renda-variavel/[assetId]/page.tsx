@@ -4,6 +4,7 @@ import { formatBRL, formatDate } from "@/lib/format";
 import { Position, Transaction, RV_TYPE_LABELS, TX_TYPE_LABELS } from "@/lib/types";
 import { DeleteTransactionButton } from "@/components/investments/delete-transaction-button";
 import { EditTransactionDialog } from "@/components/investments/edit-transaction-dialog";
+import { ProventoDialog } from "@/components/investments/provento-dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -44,17 +45,23 @@ export default async function AtivoRendaVariavelPage({
 
   const pos = position as Position;
   const transactions = (txs ?? []) as Transaction[];
+  const totalProventos = transactions
+    .filter((tx) => tx.tx_type === "provento")
+    .reduce((sum, tx) => sum + tx.amount, 0);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{pos.ticker}</h1>
-        <Badge variant="secondary">
-          {pos.rv_type ? RV_TYPE_LABELS[pos.rv_type] : "-"}
-        </Badge>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">{pos.ticker}</h1>
+          <Badge variant="secondary">
+            {pos.rv_type ? RV_TYPE_LABELS[pos.rv_type] : "-"}
+          </Badge>
+        </div>
+        <ProventoDialog assetId={pos.asset_id} ticker={pos.ticker ?? ""} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
             <CardDescription>Quantidade</CardDescription>
@@ -74,6 +81,14 @@ export default async function AtivoRendaVariavelPage({
             <CardDescription>Valor investido</CardDescription>
             <CardTitle className="tabular-nums">
               {formatBRL(pos.net_invested)}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardDescription>Proventos recebidos</CardDescription>
+            <CardTitle className="tabular-nums text-success">
+              {formatBRL(totalProventos)}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -107,13 +122,24 @@ export default async function AtivoRendaVariavelPage({
                     <TableCell>{formatDate(tx.tx_date)}</TableCell>
                     <TableCell>
                       <Badge
-                        variant={tx.tx_type === "compra" ? "default" : "outline"}
+                        variant={
+                          tx.tx_type === "provento"
+                            ? "secondary"
+                            : tx.tx_type === "compra"
+                              ? "default"
+                              : "outline"
+                        }
+                        className={
+                          tx.tx_type === "provento"
+                            ? "bg-success/15 text-success"
+                            : undefined
+                        }
                       >
                         {TX_TYPE_LABELS[tx.tx_type]}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {tx.quantity}
+                      {tx.quantity ?? "-"}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {tx.unit_price ? formatBRL(tx.unit_price) : "-"}
@@ -125,17 +151,21 @@ export default async function AtivoRendaVariavelPage({
                       {formatBRL(tx.amount)}
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap">
-                      <EditTransactionDialog
-                        transactionId={tx.id}
-                        ticker={pos.ticker ?? ""}
-                        txType={tx.tx_type === "venda" ? "venda" : "compra"}
-                        txDate={tx.tx_date}
-                        quantity={tx.quantity}
-                        unitPrice={tx.unit_price}
-                        fees={tx.fees}
-                        notes={tx.notes}
-                      />
-                      <DeleteTransactionButton transactionId={tx.id} />
+                      <div className="flex items-center justify-end gap-1">
+                        {(tx.tx_type === "compra" || tx.tx_type === "venda") && (
+                          <EditTransactionDialog
+                            transactionId={tx.id}
+                            ticker={pos.ticker ?? ""}
+                            txType={tx.tx_type}
+                            txDate={tx.tx_date}
+                            quantity={tx.quantity}
+                            unitPrice={tx.unit_price}
+                            fees={tx.fees}
+                            notes={tx.notes}
+                          />
+                        )}
+                        <DeleteTransactionButton transactionId={tx.id} />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -82,6 +82,9 @@ export default async function RendaVariavelPage() {
   const resultado = totalAtual - totalInvestido;
   const resultadoPct = totalInvestido > 0 ? resultado / totalInvestido : 0;
   const isPositivo = resultado >= 0;
+  const totalProventos = transactions
+    .filter((tx) => tx.tx_type === "provento")
+    .reduce((sum, tx) => sum + tx.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -93,7 +96,7 @@ export default async function RendaVariavelPage() {
       </div>
 
       {openPositions.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader>
               <CardDescription className="flex items-center gap-1.5">
@@ -138,6 +141,17 @@ export default async function RendaVariavelPage() {
                   ({isPositivo ? "+" : ""}
                   {formatPercent(resultadoPct)})
                 </span>
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardDescription className="flex items-center gap-1.5">
+                <Wallet className="size-3.5" />
+                Proventos recebidos
+              </CardDescription>
+              <CardTitle className="text-2xl tabular-nums text-success">
+                {formatBRL(totalProventos)}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -250,7 +264,18 @@ export default async function RendaVariavelPage() {
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant={tx.tx_type === "compra" ? "default" : "outline"}
+                            variant={
+                              tx.tx_type === "provento"
+                                ? "secondary"
+                                : tx.tx_type === "compra"
+                                  ? "default"
+                                  : "outline"
+                            }
+                            className={
+                              tx.tx_type === "provento"
+                                ? "bg-success/15 text-success"
+                                : undefined
+                            }
                           >
                             {TX_TYPE_LABELS[tx.tx_type]}
                           </Badge>
@@ -259,7 +284,7 @@ export default async function RendaVariavelPage() {
                           {formatDate(tx.tx_date)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
-                          {tx.quantity}
+                          {tx.quantity ?? "-"}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {tx.unit_price != null ? formatBRL(tx.unit_price) : "-"}
@@ -271,17 +296,21 @@ export default async function RendaVariavelPage() {
                           {currentPrice != null ? formatBRL(currentPrice) : "—"}
                         </TableCell>
                         <TableCell className="text-right whitespace-nowrap">
-                          <EditTransactionDialog
-                            transactionId={tx.id}
-                            ticker={ticker ?? ""}
-                            txType={tx.tx_type === "venda" ? "venda" : "compra"}
-                            txDate={tx.tx_date}
-                            quantity={tx.quantity}
-                            unitPrice={tx.unit_price}
-                            fees={tx.fees}
-                            notes={tx.notes}
-                          />
-                          <DeleteTransactionButton transactionId={tx.id} />
+                          <div className="flex items-center justify-end gap-1">
+                            {(tx.tx_type === "compra" || tx.tx_type === "venda") && (
+                              <EditTransactionDialog
+                                transactionId={tx.id}
+                                ticker={ticker ?? ""}
+                                txType={tx.tx_type}
+                                txDate={tx.tx_date}
+                                quantity={tx.quantity}
+                                unitPrice={tx.unit_price}
+                                fees={tx.fees}
+                                notes={tx.notes}
+                              />
+                            )}
+                            <DeleteTransactionButton transactionId={tx.id} />
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

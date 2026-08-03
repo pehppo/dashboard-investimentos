@@ -1,7 +1,7 @@
 export type AssetClass = "renda_variavel" | "renda_fixa";
 export type RvType = "acao" | "fii" | "etf" | "bdr";
 export type IndexadorType = "cdi_pct" | "ipca_mais" | "prefixado" | "selic_pct";
-export type TxType = "compra" | "venda" | "aporte" | "resgate";
+export type TxType = "compra" | "venda" | "aporte" | "resgate" | "provento";
 
 export interface Asset {
   id: string;
@@ -64,6 +64,7 @@ export const TX_TYPE_LABELS: Record<TxType, string> = {
   venda: "Venda",
   aporte: "Aporte",
   resgate: "Resgate",
+  provento: "Provento",
 };
 
 export const INDEXADOR_LABELS: Record<IndexadorType, string> = {
