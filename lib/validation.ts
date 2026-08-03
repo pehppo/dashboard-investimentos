@@ -54,6 +54,12 @@ export const rendaFixaAssetSchema = z.object({
 
 export type RendaFixaAssetInput = z.infer<typeof rendaFixaAssetSchema>;
 
+export const grantShareSchema = z.object({
+  email: z.string().trim().toLowerCase().email("E-mail inválido"),
+});
+
+export type GrantShareInput = z.infer<typeof grantShareSchema>;
+
 export const signUpSchema = z
   .object({
     email: z.string().trim().email("E-mail inválido"),

@@ -3,9 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { MainNav } from "@/components/layout/main-nav";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { NewInvestmentButton } from "@/components/investments/new-investment-button";
 
-export default async function AppLayout({
+export default async function SharedLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -34,7 +33,6 @@ export default async function AppLayout({
             Investimentos
           </span>
           <div className="order-2 flex items-center gap-2 sm:order-3">
-            <NewInvestmentButton variant="icon" />
             <ThemeToggle />
             <UserMenu label={profile?.display_name ?? user?.email ?? ""} />
           </div>
@@ -43,10 +41,9 @@ export default async function AppLayout({
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-8 sm:pb-24">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         {children}
       </main>
-      <NewInvestmentButton />
     </div>
   );
 }
