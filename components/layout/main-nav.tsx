@@ -8,6 +8,7 @@ const links = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/renda-variavel", label: "Renda Variável" },
   { href: "/renda-fixa", label: "Renda Fixa" },
+  { href: "/assistente", label: "Assistente" },
 ];
 
 export function MainNav() {
