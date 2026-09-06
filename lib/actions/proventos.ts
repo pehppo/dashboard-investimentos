@@ -35,6 +35,17 @@ export async function createProvento(
     return { error: "Sessão expirada, faça login novamente" };
   }
 
+  const { data: asset } = await supabase
+    .from("assets")
+    .select("id")
+    .eq("id", assetId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!asset) {
+    return { error: "Ativo não encontrado" };
+  }
+
   const { error } = await supabase.from("transactions").insert({
     user_id: user.id,
     asset_id: assetId,

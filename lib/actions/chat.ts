@@ -34,7 +34,13 @@ export interface PortfolioSnapshot {
 // da RF na alocação de hoje com juros ainda não realizados.
 export async function getPortfolioSnapshot(): Promise<PortfolioSnapshot> {
   const supabase = await createClient();
-  const { data } = await supabase.from("positions").select("*");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data } = await supabase
+    .from("positions")
+    .select("*")
+    .eq("user_id", user?.id ?? "");
   const positions = (data ?? []) as Position[];
   const open = positions.filter((p) => p.quantity_held !== 0 || p.net_invested !== 0);
 

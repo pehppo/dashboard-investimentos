@@ -27,17 +27,20 @@ import {
 
 export default async function RendaFixaPage() {
   const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const userId = session?.user.id ?? "";
+
   const { data } = await supabase
     .from("positions")
     .select("*")
+    .eq("user_id", userId)
     .eq("asset_class", "renda_fixa")
     .order("purchase_date", { ascending: false });
 
   const positions = (data ?? []) as Position[];
-  const [rates, { data: { session } }] = await Promise.all([
-    getRendaFixaRates(),
-    supabase.auth.getSession(),
-  ]);
+  const rates = await getRendaFixaRates();
   after(() => refreshRendaFixaRatesIfStale(session?.access_token));
 
   const rows = positions.map((p) => {

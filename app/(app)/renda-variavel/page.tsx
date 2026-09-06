@@ -40,11 +40,16 @@ interface RvTransactionRow {
 
 export default async function RendaVariavelPage() {
   const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const userId = session?.user.id ?? "";
 
   const [{ data: positionsData }, { data: txData }] = await Promise.all([
     supabase
       .from("positions")
       .select("*")
+      .eq("user_id", userId)
       .eq("asset_class", "renda_variavel")
       .order("ticker"),
     supabase
@@ -52,6 +57,7 @@ export default async function RendaVariavelPage() {
       .select(
         "id, tx_date, tx_type, quantity, unit_price, amount, fees, notes, asset_id, assets!inner(ticker, rv_type)",
       )
+      .eq("user_id", userId)
       .eq("assets.asset_class", "renda_variavel")
       .order("tx_date", { ascending: false }),
   ]);
@@ -66,10 +72,7 @@ export default async function RendaVariavelPage() {
       transactions.map((t) => t.assets?.ticker).filter((t): t is string => !!t),
     ),
   );
-  const [currentPrices, { data: { session } }] = await Promise.all([
-    getLatestQuotes(tickers),
-    supabase.auth.getSession(),
-  ]);
+  const currentPrices = await getLatestQuotes(tickers);
   after(() => refreshQuotesIfStale(tickers, session?.access_token));
 
   const totalInvestido = openPositions.reduce((sum, p) => sum + p.net_invested, 0);

@@ -133,7 +133,16 @@ function ClassEmptyCard({
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const { data } = await supabase.from("positions").select("*");
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const userId = session?.user.id ?? "";
+  const accessToken = session?.access_token;
+
+  const { data } = await supabase
+    .from("positions")
+    .select("*")
+    .eq("user_id", userId);
   const positions = (data ?? []) as Position[];
 
   const open = positions.filter((p) => p.quantity_held !== 0 || p.net_invested !== 0);
@@ -152,12 +161,10 @@ export default async function DashboardPage() {
   );
   // Lê o que já está em cache pra render ser instantâneo; a atualização das
   // cotações/taxas roda em segundo plano depois da resposta ser enviada.
-  const [currentPrices, rates, { data: { session } }] = await Promise.all([
+  const [currentPrices, rates] = await Promise.all([
     getLatestQuotes(rvTickers),
     getRendaFixaRates(),
-    supabase.auth.getSession(),
   ]);
-  const accessToken = session?.access_token;
   after(() => refreshQuotesIfStale(rvTickers, accessToken));
   after(() => refreshRendaFixaRatesIfStale(accessToken));
 

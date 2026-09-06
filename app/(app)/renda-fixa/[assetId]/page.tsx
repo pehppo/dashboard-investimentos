@@ -32,13 +32,23 @@ export default async function AtivoRendaFixaPage({
 }) {
   const { assetId } = await params;
   const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const userId = session?.user.id ?? "";
 
   const [{ data: position }, { data: txs }] = await Promise.all([
-    supabase.from("positions").select("*").eq("asset_id", assetId).maybeSingle(),
+    supabase
+      .from("positions")
+      .select("*")
+      .eq("asset_id", assetId)
+      .eq("user_id", userId)
+      .maybeSingle(),
     supabase
       .from("transactions")
       .select("*")
       .eq("asset_id", assetId)
+      .eq("user_id", userId)
       .order("tx_date", { ascending: false }),
   ]);
 
@@ -48,10 +58,7 @@ export default async function AtivoRendaFixaPage({
 
   const pos = position as Position;
   const transactions = (txs ?? []) as Transaction[];
-  const [rates, { data: { session } }] = await Promise.all([
-    getRendaFixaRates(),
-    supabase.auth.getSession(),
-  ]);
+  const rates = await getRendaFixaRates();
   after(() => refreshRendaFixaRatesIfStale(session?.access_token));
 
   const estimated =

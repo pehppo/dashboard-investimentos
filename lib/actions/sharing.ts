@@ -34,13 +34,11 @@ export async function grantShare(
     return { error: "Você não pode compartilhar com você mesmo" };
   }
 
-  const { data: viewerProfile } = await supabase
-    .from("profiles")
-    .select("id")
-    .ilike("email", email)
-    .maybeSingle();
+  const { data: viewerId } = await supabase.rpc("find_user_id_by_email", {
+    target_email: email,
+  });
 
-  if (!viewerProfile) {
+  if (!viewerId) {
     return { error: "Nenhum usuário cadastrado com esse e-mail" };
   }
 
@@ -49,7 +47,7 @@ export async function grantShare(
   const { error } = await supabase
     .from("portfolio_shares")
     .upsert(
-      { owner_id: user.id, viewer_id: viewerProfile.id, revoked_at: null },
+      { owner_id: user.id, viewer_id: viewerId, revoked_at: null },
       { onConflict: "owner_id,viewer_id" },
     );
 

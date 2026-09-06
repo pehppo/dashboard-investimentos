@@ -31,13 +31,23 @@ export default async function AtivoRendaVariavelPage({
 }) {
   const { assetId } = await params;
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user?.id ?? "";
 
   const [{ data: position }, { data: txs }] = await Promise.all([
-    supabase.from("positions").select("*").eq("asset_id", assetId).maybeSingle(),
+    supabase
+      .from("positions")
+      .select("*")
+      .eq("asset_id", assetId)
+      .eq("user_id", userId)
+      .maybeSingle(),
     supabase
       .from("transactions")
       .select("*")
       .eq("asset_id", assetId)
+      .eq("user_id", userId)
       .order("tx_date", { ascending: false }),
   ]);
 
