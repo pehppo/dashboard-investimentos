@@ -25,28 +25,48 @@ interface BrapiResponse {
   results?: BrapiQuoteResult[];
 }
 
+// O plano gratuito da brapi.dev permite só 1 ativo por requisição de cotação
+// (pedir vários tickers juntos devolve 400 QUOTES_PER_REQUEST_EXCEEDED e
+// nenhum preço é atualizado) — por isso buscamos um por um.
 export async function fetchQuotes(tickers: string[]): Promise<BrapiQuote[]> {
   if (tickers.length === 0) return [];
 
   const token = process.env.BRAPI_TOKEN;
   if (!token) return [];
 
-  const url = `https://brapi.dev/api/quote/${tickers.join(",")}?token=${token}`;
+  const settled = await Promise.allSettled(
+    tickers.map((ticker) => fetchQuote(ticker, token)),
+  );
+
+  const quotes: BrapiQuote[] = [];
+  for (let i = 0; i < settled.length; i++) {
+    const result = settled[i];
+    if (result.status === "fulfilled") {
+      if (result.value) quotes.push(result.value);
+    } else {
+      console.error(`fetchQuotes: falha ao buscar ${tickers[i]}`, result.reason);
+    }
+  }
+  return quotes;
+}
+
+async function fetchQuote(ticker: string, token: string): Promise<BrapiQuote | null> {
+  const url = `https://brapi.dev/api/quote/${ticker}?token=${token}`;
   const res = await fetch(url, { cache: "no-store" });
 
   if (!res.ok) {
-    throw new Error(`brapi.dev respondeu ${res.status}`);
+    throw new Error(`brapi.dev respondeu ${res.status} para ${ticker}`);
   }
 
   const data = (await res.json()) as BrapiResponse;
+  const result = data.results?.[0];
+  if (!result || result.regularMarketPrice == null) return null;
 
-  return (data.results ?? [])
-    .filter((r) => r.regularMarketPrice != null)
-    .map((r) => ({
-      ticker: r.symbol,
-      price: r.regularMarketPrice as number,
-      asOf: r.regularMarketTime ?? new Date().toISOString(),
-    }));
+  return {
+    ticker: result.symbol,
+    price: result.regularMarketPrice,
+    asOf: result.regularMarketTime ?? new Date().toISOString(),
+  };
 }
 
 // Usado só pra popular o gráfico de histórico de preço com mais profundidade
