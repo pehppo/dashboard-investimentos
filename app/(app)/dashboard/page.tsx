@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { after } from "next/server";
 import {
+  Banknote,
   Landmark,
   LineChart,
   PiggyBank,
@@ -200,6 +201,7 @@ export default async function DashboardPage() {
   const resultadoGeral = resultadoRV + rendimentoRF;
   const resultadoGeralPct = totalInvestido > 0 ? resultadoGeral / totalInvestido : 0;
   const isPositivoGeral = resultadoGeral >= 0;
+  const patrimonioAtual = totalInvestido + resultadoGeral;
 
   return (
     <div className="space-y-8">
@@ -210,7 +212,7 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardDescription className="flex items-center gap-1.5">
@@ -223,34 +225,47 @@ export default async function DashboardPage() {
           </CardHeader>
         </Card>
         {open.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardDescription className="flex items-center gap-1.5">
-                {isPositivoGeral ? (
-                  <TrendingUp className="size-3.5" />
-                ) : (
-                  <TrendingDown className="size-3.5" />
-                )}
-                Resultado geral
-              </CardDescription>
-              <CardTitle
-                className={cn(
-                  "text-4xl tabular-nums",
-                  isPositivoGeral ? "text-success" : "text-destructive",
-                )}
-              >
-                {isPositivoGeral ? "+" : ""}
-                {formatBRL(resultadoGeral)}{" "}
-                <span className="text-lg font-medium">
-                  ({isPositivoGeral ? "+" : ""}
-                  {formatPercent(resultadoGeralPct)})
-                </span>
-              </CardTitle>
-              <CardDescription className="pt-1 text-xs">
-                Real em Renda Variável + estimado em Renda Fixa
-              </CardDescription>
-            </CardHeader>
-          </Card>
+          <>
+            <Card>
+              <CardHeader>
+                <CardDescription className="flex items-center gap-1.5">
+                  <Banknote className="size-3.5" />
+                  Patrimônio atual
+                </CardDescription>
+                <CardTitle className="text-4xl tabular-nums">
+                  {formatBRL(patrimonioAtual)}
+                </CardTitle>
+                <CardDescription className="pt-1 text-xs">
+                  Real em Renda Variável + estimado em Renda Fixa
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardDescription className="flex items-center gap-1.5">
+                  {isPositivoGeral ? (
+                    <TrendingUp className="size-3.5" />
+                  ) : (
+                    <TrendingDown className="size-3.5" />
+                  )}
+                  Resultado geral
+                </CardDescription>
+                <CardTitle
+                  className={cn(
+                    "text-4xl tabular-nums",
+                    isPositivoGeral ? "text-success" : "text-destructive",
+                  )}
+                >
+                  {isPositivoGeral ? "+" : ""}
+                  {formatBRL(resultadoGeral)}{" "}
+                  <span className="text-lg font-medium">
+                    ({isPositivoGeral ? "+" : ""}
+                    {formatPercent(resultadoGeralPct)})
+                  </span>
+                </CardTitle>
+              </CardHeader>
+            </Card>
+          </>
         )}
       </div>
 
